@@ -3,16 +3,18 @@
   "dockerComposeFile": "../docker-compose.yml",
   "service": "workspace",
   "workspaceFolder": "/workspace",
-
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "24"
     }
   },
-
-  "forwardPorts": [5173, 8000, 5432, 5433],
+  "forwardPorts": [
+    5173,
+    8000,
+    5432,
+    5433
+  ],
   "postStartCommand": "bash .devcontainer/post-start.sh",
-
   "customizations": {
     "vscode": {
       "extensions": [
@@ -21,6 +23,24 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode"
       ]
+    }
+  },
+  "portsAttributes": {
+    "5173": {
+      "label": "Order Management Web",
+      "onAutoForward": "openBrowser"
+    },
+    "5432": {
+      "label": "PostgreSQL Development",
+      "onAutoForward": "silent"
+    },
+    "5433": {
+      "label": "PostgreSQL Test",
+      "onAutoForward": "silent"
+    },
+    "8000": {
+      "label": "Order Management API",
+      "onAutoForward": "notify"
     }
   }
 }
