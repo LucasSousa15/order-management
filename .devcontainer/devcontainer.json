@@ -1,0 +1,26 @@
+{
+  "name": "Order Monorepo",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "workspace",
+  "workspaceFolder": "/workspace",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "24"
+    }
+  },
+
+  "forwardPorts": [5173, 8000, 5432],
+  "postCreateCommand": "python -m pip install --user -r apps/api/requirements.txt && npm ci --prefix apps/web",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  }
+}
