@@ -10,8 +10,8 @@
     }
   },
 
-  "forwardPorts": [5173, 8000, 5432],
-  "postCreateCommand": "python -m pip install --user -r apps/api/requirements.txt && npm ci --prefix apps/web",
+  "forwardPorts": [5173, 8000, 5432, 5433],
+  "postStartCommand": "bash .devcontainer/post-start.sh",
 
   "customizations": {
     "vscode": {
