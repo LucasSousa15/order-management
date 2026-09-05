@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import cast
 
 import pytest
 
@@ -59,7 +60,7 @@ def test_reject_non_decimal_product_price() -> None:
         Product(
             name="Mechanical Keyboard",
             sku="KEY-001",
-            price=349.90,  # type: ignore[arg-type]
+            price=cast(Decimal, 349.90),
             stock_quantity=10,
         )
 

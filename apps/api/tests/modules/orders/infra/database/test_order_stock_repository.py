@@ -45,10 +45,12 @@ def test_create_order_updates_product_stock_in_database() -> None:
                 items=(OrderItemSelection(product_id=product.id, quantity=2),)
             )
         )
+        assert order.id is not None
+        order_id = order.id
         session.expire_all()
 
         persisted_product = product_repository.get_by_id(product.id)
-        persisted_order = order_repository.get_by_id(order.id)
+        persisted_order = order_repository.get_by_id(order_id)
         assert persisted_product is not None
         assert persisted_product.stock_quantity == 1
         assert persisted_order == order
@@ -59,7 +61,7 @@ def test_create_order_updates_product_stock_in_database() -> None:
             audit_log_repository,
         ).execute(
             UpdateOrderCommand(
-                order_id=order.id,
+                order_id=order_id,
                 items=(OrderItemSelection(product_id=product.id, quantity=1),),
             )
         )
@@ -73,12 +75,12 @@ def test_create_order_updates_product_stock_in_database() -> None:
             order_repository,
             product_repository,
             audit_log_repository,
-        ).execute(order.id)  # type: ignore[arg-type]
+        ).execute(order_id)
         session.expire_all()
         product_after_delete = product_repository.get_by_id(product.id)
         assert product_after_delete is not None
         assert product_after_delete.stock_quantity == 3
-        assert order_repository.get_by_id(order.id) is None  # type: ignore[arg-type]
+        assert order_repository.get_by_id(order_id) is None
         assert [
             audit_log.event_type
             for audit_log in reversed(

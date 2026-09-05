@@ -61,7 +61,7 @@ def test_create_order_with_one_product_and_decrement_stock() -> None:
     assert order.items[0].quantity == 1
     assert order.items[0].unit_price == Decimal("25.90")
     assert order_repository.get_by_id(order.id) == order
-    assert product_repository.get_by_id(product.id).stock_quantity == 2  # type: ignore[union-attr]
+    assert product_repository.require_by_id(product.id).stock_quantity == 2
     assert [log.event_type for log in audit_log_repository.list_all()] == [
         AuditEventType.STOCK_MOVEMENT,
         AuditEventType.ORDER_CREATED,
@@ -100,8 +100,8 @@ def test_create_order_with_multiple_products() -> None:
     )
 
     assert len(order.items) == 2
-    assert product_repository.get_by_id(first_product.id).stock_quantity == 3  # type: ignore[union-attr]
-    assert product_repository.get_by_id(second_product.id).stock_quantity == 1  # type: ignore[union-attr]
+    assert product_repository.require_by_id(first_product.id).stock_quantity == 3
+    assert product_repository.require_by_id(second_product.id).stock_quantity == 1
 
 
 def test_reject_order_with_missing_product() -> None:

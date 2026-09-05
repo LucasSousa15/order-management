@@ -23,6 +23,12 @@ class InMemoryProductRepository:
     def get_by_id(self, product_id: int) -> Product | None:
         return self._products.get(product_id)
 
+    def require_by_id(self, product_id: int) -> Product:
+        product = self.get_by_id(product_id)
+        if product is None:
+            raise AssertionError(f"Product {product_id} was not found")
+        return product
+
     def get_by_sku(self, sku: str) -> Product | None:
         normalized_sku = sku.strip().upper()
         return next(

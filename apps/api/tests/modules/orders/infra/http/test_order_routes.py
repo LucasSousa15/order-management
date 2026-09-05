@@ -97,8 +97,8 @@ def test_create_order_and_decrement_stock(context: OrderTestContext) -> None:
             "unit_price": "25.90",
         },
     ]
-    assert context.product_repository.get_by_id(first_product.id).stock_quantity == 3  # type: ignore[union-attr]
-    assert context.product_repository.get_by_id(second_product.id).stock_quantity == 2  # type: ignore[union-attr]
+    assert context.product_repository.require_by_id(first_product.id).stock_quantity == 3
+    assert context.product_repository.require_by_id(second_product.id).stock_quantity == 2
 
 
 def test_reject_order_when_product_has_no_stock(context: OrderTestContext) -> None:
@@ -212,12 +212,12 @@ def test_get_update_and_delete_order(context: OrderTestContext) -> None:
     )
     assert update_response.status_code == 200
     assert update_response.json()["items"][0]["quantity"] == 1
-    assert context.product_repository.get_by_id(product.id).stock_quantity == 4  # type: ignore[union-attr]
+    assert context.product_repository.require_by_id(product.id).stock_quantity == 4
 
     delete_response = context.client.delete(f"/orders/{order_id}")
     assert delete_response.status_code == 204
     assert delete_response.content == b""
-    assert context.product_repository.get_by_id(product.id).stock_quantity == 5  # type: ignore[union-attr]
+    assert context.product_repository.require_by_id(product.id).stock_quantity == 5
     assert context.client.get(f"/orders/{order_id}").status_code == 404
 
 

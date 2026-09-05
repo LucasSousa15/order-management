@@ -119,8 +119,8 @@ def test_update_order_reconciles_product_stocks() -> None:
         (first_product.id, 1),
         (second_product.id, 3),
     ]
-    assert product_repository.get_by_id(first_product.id).stock_quantity == 4  # type: ignore[union-attr]
-    assert product_repository.get_by_id(second_product.id).stock_quantity == 1  # type: ignore[union-attr]
+    assert product_repository.require_by_id(first_product.id).stock_quantity == 4
+    assert product_repository.require_by_id(second_product.id).stock_quantity == 1
     assert [log.event_type for log in audit_log_repository.list_all()] == [
         AuditEventType.STOCK_MOVEMENT,
         AuditEventType.STOCK_MOVEMENT,
@@ -167,7 +167,7 @@ def test_reject_order_update_without_changing_order_or_stock() -> None:
         )
 
     assert order_repository.get_by_id(order.id) == order
-    assert product_repository.get_by_id(product.id).stock_quantity == 0  # type: ignore[union-attr]
+    assert product_repository.require_by_id(product.id).stock_quantity == 0
 
 
 def test_delete_order_restores_stock() -> None:
@@ -191,7 +191,7 @@ def test_delete_order_restores_stock() -> None:
 
     assert result is None
     assert order_repository.get_by_id(order.id) is None
-    assert product_repository.get_by_id(product.id).stock_quantity == 5  # type: ignore[union-attr]
+    assert product_repository.require_by_id(product.id).stock_quantity == 5
     assert [log.event_type for log in audit_log_repository.list_all()] == [
         AuditEventType.STOCK_MOVEMENT,
         AuditEventType.ORDER_DELETED,

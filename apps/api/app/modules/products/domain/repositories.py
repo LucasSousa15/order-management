@@ -5,7 +5,6 @@ from app.modules.products.domain.entities import Product
 
 
 class ProductRepository(Protocol):
-    """Persistence contract implemented by the infrastructure layer."""
 
     def add(self, product: Product) -> Product:
         ...
