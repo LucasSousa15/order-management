@@ -10,9 +10,15 @@ export interface ModalProps {
   children: ReactNode
   footer?: ReactNode
   closeDisabled?: boolean
+  size?: 'default' | 'wide'
 }
 
-export function Modal({ open, onClose, title, description, children, footer, closeDisabled = false }: ModalProps) {
+const modalSizes = {
+  default: 'max-w-lg',
+  wide: 'max-w-3xl',
+}
+
+export function Modal({ open, onClose, title, description, children, footer, closeDisabled = false, size = 'default' }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   const descriptionId = useId()
@@ -44,7 +50,7 @@ export function Modal({ open, onClose, title, description, children, footer, clo
         event.preventDefault()
         if (!closeDisabled) onClose()
       }}
-      className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-xl border-0 bg-white p-0 text-slate-700 shadow-xl backdrop:bg-slate-900/50"
+      className={`fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] ${modalSizes[size]} overflow-y-auto rounded-xl border-0 bg-white p-0 text-slate-700 shadow-xl backdrop:bg-slate-900/50`}
     >
       <header className="flex items-start justify-between gap-4 border-b border-slate-200 p-6">
         <div>
