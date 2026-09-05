@@ -1,6 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.modules.products.infra.http.exception_handlers import (
+    register_product_exception_handlers,
+)
+from app.modules.products.infra.http.router import router as products_router
+
 app = FastAPI()
 
 app.add_middleware(
@@ -11,6 +16,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(products_router)
+register_product_exception_handlers(app)
+
+
 @app.get("/consume-status")
-def get_consume_status():
+def get_consume_status() -> dict[str, str]:
     return {"message": "Consume status endpoint is working!"}

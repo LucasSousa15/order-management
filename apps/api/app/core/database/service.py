@@ -30,4 +30,9 @@ database = Database(database_settings.url)
 
 def get_session() -> Iterator[Session]:
     with database.session() as session:
-        yield session
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
