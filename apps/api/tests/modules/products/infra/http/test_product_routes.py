@@ -4,14 +4,18 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.modules.audit_logs.infra.http.dependencies import get_audit_log_repository
 from app.modules.products.infra.http.dependencies import get_product_repository
+from tests.modules.audit_logs.in_memory_repository import InMemoryAuditLogRepository
 from tests.modules.products.in_memory_repository import InMemoryProductRepository
 
 
 @pytest.fixture
 def client() -> Iterator[TestClient]:
     repository = InMemoryProductRepository()
+    audit_log_repository = InMemoryAuditLogRepository()
     app.dependency_overrides[get_product_repository] = lambda: repository
+    app.dependency_overrides[get_audit_log_repository] = lambda: audit_log_repository
 
     with TestClient(app) as test_client:
         yield test_client

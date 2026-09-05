@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, Response, status
 
 from app.core.pagination import PageRequest
+from app.modules.audit_logs.infra.http.dependencies import AuditLogRepositoryDependency
 from app.modules.orders.application.use_cases import (
     CreateOrder,
     CreateOrderCommand,
@@ -35,8 +36,13 @@ def create_order(
     request: OrderCreateRequest,
     order_repository: OrderRepositoryDependency,
     product_repository: ProductRepositoryDependency,
+    audit_log_repository: AuditLogRepositoryDependency,
 ) -> OrderViewModel:
-    order = CreateOrder(order_repository, product_repository).execute(
+    order = CreateOrder(
+        order_repository,
+        product_repository,
+        audit_log_repository,
+    ).execute(
         CreateOrderCommand(
             items=tuple(
                 OrderItemSelection(
@@ -77,8 +83,13 @@ def update_order(
     request: OrderUpdateRequest,
     order_repository: OrderRepositoryDependency,
     product_repository: ProductRepositoryDependency,
+    audit_log_repository: AuditLogRepositoryDependency,
 ) -> OrderViewModel:
-    order = UpdateOrder(order_repository, product_repository).execute(
+    order = UpdateOrder(
+        order_repository,
+        product_repository,
+        audit_log_repository,
+    ).execute(
         UpdateOrderCommand(
             order_id=order_id,
             items=tuple(
@@ -102,8 +113,13 @@ def delete_order(
     order_id: int,
     order_repository: OrderRepositoryDependency,
     product_repository: ProductRepositoryDependency,
+    audit_log_repository: AuditLogRepositoryDependency,
 ) -> Response:
-    DeleteOrder(order_repository, product_repository).execute(order_id)
+    DeleteOrder(
+        order_repository,
+        product_repository,
+        audit_log_repository,
+    ).execute(order_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

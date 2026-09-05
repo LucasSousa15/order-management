@@ -8,7 +8,9 @@ from app.modules.orders.application.errors import (
 )
 from app.modules.orders.application.use_cases import CreateOrder, CreateOrderCommand
 from app.modules.orders.domain.entities import OrderItemSelection
+from app.modules.audit_logs.domain.entities import AuditEventType
 from app.modules.products.domain.entities import Product
+from tests.modules.audit_logs.in_memory_repository import InMemoryAuditLogRepository
 from tests.modules.orders.in_memory_repository import InMemoryOrderRepository
 from tests.modules.products.in_memory_repository import InMemoryProductRepository
 
@@ -33,6 +35,7 @@ def add_product(
 def test_create_order_with_one_product_and_decrement_stock() -> None:
     product_repository = InMemoryProductRepository()
     order_repository = InMemoryOrderRepository()
+    audit_log_repository = InMemoryAuditLogRepository()
     product = add_product(
         product_repository,
         sku="PRO-001",
@@ -41,7 +44,11 @@ def test_create_order_with_one_product_and_decrement_stock() -> None:
     )
     assert product.id is not None
 
-    order = CreateOrder(order_repository, product_repository).execute(
+    order = CreateOrder(
+        order_repository,
+        product_repository,
+        audit_log_repository,
+    ).execute(
         CreateOrderCommand(
             items=(OrderItemSelection(product_id=product.id, quantity=1),)
         )
@@ -55,6 +62,10 @@ def test_create_order_with_one_product_and_decrement_stock() -> None:
     assert order.items[0].unit_price == Decimal("25.90")
     assert order_repository.get_by_id(order.id) == order
     assert product_repository.get_by_id(product.id).stock_quantity == 2  # type: ignore[union-attr]
+    assert [log.event_type for log in audit_log_repository.list_all()] == [
+        AuditEventType.STOCK_MOVEMENT,
+        AuditEventType.ORDER_CREATED,
+    ]
 
 
 def test_create_order_with_multiple_products() -> None:
@@ -75,7 +86,11 @@ def test_create_order_with_multiple_products() -> None:
     assert first_product.id is not None
     assert second_product.id is not None
 
-    order = CreateOrder(order_repository, product_repository).execute(
+    order = CreateOrder(
+        order_repository,
+        product_repository,
+        InMemoryAuditLogRepository(),
+    ).execute(
         CreateOrderCommand(
             items=(
                 OrderItemSelection(product_id=first_product.id, quantity=2),
@@ -94,7 +109,11 @@ def test_reject_order_with_missing_product() -> None:
     order_repository = InMemoryOrderRepository()
 
     with pytest.raises(OrderProductNotFoundError, match="999"):
-        CreateOrder(order_repository, product_repository).execute(
+        CreateOrder(
+            order_repository,
+            product_repository,
+            InMemoryAuditLogRepository(),
+        ).execute(
             CreateOrderCommand(
                 items=(OrderItemSelection(product_id=999, quantity=1),)
             )
@@ -122,7 +141,11 @@ def test_reject_order_with_insufficient_stock(
     assert product.id is not None
 
     with pytest.raises(InsufficientStockError, match=str(product.id)):
-        CreateOrder(order_repository, product_repository).execute(
+        CreateOrder(
+            order_repository,
+            product_repository,
+            InMemoryAuditLogRepository(),
+        ).execute(
             CreateOrderCommand(
                 items=(
                     OrderItemSelection(
@@ -156,7 +179,11 @@ def test_validate_every_stock_before_changing_any_product() -> None:
     assert unavailable_product.id is not None
 
     with pytest.raises(InsufficientStockError):
-        CreateOrder(order_repository, product_repository).execute(
+        CreateOrder(
+            order_repository,
+            product_repository,
+            InMemoryAuditLogRepository(),
+        ).execute(
             CreateOrderCommand(
                 items=(
                     OrderItemSelection(

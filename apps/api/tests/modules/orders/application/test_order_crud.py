@@ -15,7 +15,9 @@ from app.modules.orders.application.use_cases import (
     UpdateOrderCommand,
 )
 from app.modules.orders.domain.entities import Order, OrderItemSelection
+from app.modules.audit_logs.domain.entities import AuditEventType
 from app.modules.products.domain.entities import Product
+from tests.modules.audit_logs.in_memory_repository import InMemoryAuditLogRepository
 from tests.modules.orders.in_memory_repository import InMemoryOrderRepository
 from tests.modules.products.in_memory_repository import InMemoryProductRepository
 
@@ -43,7 +45,11 @@ def create_order(
     quantity: int,
 ) -> Order:
     assert product.id is not None
-    return CreateOrder(order_repository, product_repository).execute(
+    return CreateOrder(
+        order_repository,
+        product_repository,
+        InMemoryAuditLogRepository(),
+    ).execute(
         CreateOrderCommand(
             items=(
                 OrderItemSelection(
@@ -92,7 +98,12 @@ def test_update_order_reconciles_product_stocks() -> None:
     assert first_product.id is not None
     assert second_product.id is not None
 
-    updated_order = UpdateOrder(order_repository, product_repository).execute(
+    audit_log_repository = InMemoryAuditLogRepository()
+    updated_order = UpdateOrder(
+        order_repository,
+        product_repository,
+        audit_log_repository,
+    ).execute(
         UpdateOrderCommand(
             order_id=order.id,
             items=(
@@ -110,6 +121,11 @@ def test_update_order_reconciles_product_stocks() -> None:
     ]
     assert product_repository.get_by_id(first_product.id).stock_quantity == 4  # type: ignore[union-attr]
     assert product_repository.get_by_id(second_product.id).stock_quantity == 1  # type: ignore[union-attr]
+    assert [log.event_type for log in audit_log_repository.list_all()] == [
+        AuditEventType.STOCK_MOVEMENT,
+        AuditEventType.STOCK_MOVEMENT,
+        AuditEventType.ORDER_UPDATED,
+    ]
 
 
 def test_reject_update_when_order_does_not_exist() -> None:
@@ -117,6 +133,7 @@ def test_reject_update_when_order_does_not_exist() -> None:
         UpdateOrder(
             InMemoryOrderRepository(),
             InMemoryProductRepository(),
+            InMemoryAuditLogRepository(),
         ).execute(
             UpdateOrderCommand(
                 order_id=999,
@@ -138,7 +155,11 @@ def test_reject_order_update_without_changing_order_or_stock() -> None:
     assert product.id is not None
 
     with pytest.raises(InsufficientStockError, match="Insufficient stock"):
-        UpdateOrder(order_repository, product_repository).execute(
+        UpdateOrder(
+            order_repository,
+            product_repository,
+            InMemoryAuditLogRepository(),
+        ).execute(
             UpdateOrderCommand(
                 order_id=order.id,
                 items=(OrderItemSelection(product_id=product.id, quantity=3),),
@@ -161,11 +182,20 @@ def test_delete_order_restores_stock() -> None:
     assert order.id is not None
     assert product.id is not None
 
-    result = DeleteOrder(order_repository, product_repository).execute(order.id)
+    audit_log_repository = InMemoryAuditLogRepository()
+    result = DeleteOrder(
+        order_repository,
+        product_repository,
+        audit_log_repository,
+    ).execute(order.id)
 
     assert result is None
     assert order_repository.get_by_id(order.id) is None
     assert product_repository.get_by_id(product.id).stock_quantity == 5  # type: ignore[union-attr]
+    assert [log.event_type for log in audit_log_repository.list_all()] == [
+        AuditEventType.STOCK_MOVEMENT,
+        AuditEventType.ORDER_DELETED,
+    ]
 
 
 def test_reject_delete_when_order_does_not_exist() -> None:
@@ -173,4 +203,5 @@ def test_reject_delete_when_order_does_not_exist() -> None:
         DeleteOrder(
             InMemoryOrderRepository(),
             InMemoryProductRepository(),
+            InMemoryAuditLogRepository(),
         ).execute(999)

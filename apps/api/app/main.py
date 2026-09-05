@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.modules.audit_logs.infra.http.router import router as audit_logs_router
 from app.modules.orders.infra.http.exception_handlers import (
     register_order_exception_handlers,
 )
@@ -22,6 +23,7 @@ app.add_middleware(
 
 app.include_router(products_router)
 app.include_router(orders_router)
+app.include_router(audit_logs_router)
 register_product_exception_handlers(app)
 register_order_exception_handlers(app)
 

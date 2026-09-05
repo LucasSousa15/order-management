@@ -6,11 +6,13 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.modules.audit_logs.infra.http.dependencies import get_audit_log_repository
 from app.modules.orders.infra.http.dependencies import (
     get_order_repository,
     get_product_repository,
 )
 from app.modules.products.domain.entities import Product
+from tests.modules.audit_logs.in_memory_repository import InMemoryAuditLogRepository
 from tests.modules.orders.in_memory_repository import InMemoryOrderRepository
 from tests.modules.products.in_memory_repository import InMemoryProductRepository
 
@@ -26,8 +28,10 @@ class OrderTestContext:
 def context() -> Iterator[OrderTestContext]:
     order_repository = InMemoryOrderRepository()
     product_repository = InMemoryProductRepository()
+    audit_log_repository = InMemoryAuditLogRepository()
     app.dependency_overrides[get_order_repository] = lambda: order_repository
     app.dependency_overrides[get_product_repository] = lambda: product_repository
+    app.dependency_overrides[get_audit_log_repository] = lambda: audit_log_repository
 
     with TestClient(app) as client:
         yield OrderTestContext(client, order_repository, product_repository)

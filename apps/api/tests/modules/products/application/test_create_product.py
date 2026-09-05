@@ -7,12 +7,15 @@ from app.modules.products.application.use_cases import (
     CreateProduct,
     CreateProductCommand,
 )
+from app.modules.audit_logs.domain.entities import AuditEventType
+from tests.modules.audit_logs.in_memory_repository import InMemoryAuditLogRepository
 from tests.modules.products.in_memory_repository import InMemoryProductRepository
 
 
 def test_create_product() -> None:
     repository = InMemoryProductRepository()
-    create_product = CreateProduct(repository)
+    audit_log_repository = InMemoryAuditLogRepository()
+    create_product = CreateProduct(repository, audit_log_repository)
 
     product = create_product.execute(
         CreateProductCommand(
@@ -30,11 +33,13 @@ def test_create_product() -> None:
     assert product.stock_quantity == 10
     assert product.created_at is not None
     assert repository.get_by_id(product.id) == product
+    assert audit_log_repository.list_all()[0].event_type == AuditEventType.PRODUCT_CREATED
 
 
 def test_reject_duplicate_product_sku() -> None:
     repository = InMemoryProductRepository()
-    create_product = CreateProduct(repository)
+    audit_log_repository = InMemoryAuditLogRepository()
+    create_product = CreateProduct(repository, audit_log_repository)
     command = CreateProductCommand(
         name="Mechanical Keyboard",
         sku="key-001",
@@ -54,3 +59,4 @@ def test_reject_duplicate_product_sku() -> None:
         )
 
     assert len(repository.list_all()) == 1
+    assert audit_log_repository.count() == 1

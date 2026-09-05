@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, Response, status
 
 from app.core.pagination import PageRequest
+from app.modules.audit_logs.infra.http.dependencies import AuditLogRepositoryDependency
 from app.modules.products.application.use_cases import (
     CreateProduct,
     CreateProductCommand,
@@ -32,8 +33,9 @@ router = APIRouter(prefix="/products", tags=["products"])
 def create_product(
     request: ProductCreateRequest,
     repository: ProductRepositoryDependency,
+    audit_log_repository: AuditLogRepositoryDependency,
 ) -> ProductViewModel:
-    product = CreateProduct(repository).execute(
+    product = CreateProduct(repository, audit_log_repository).execute(
         CreateProductCommand(
             name=request.name,
             sku=request.sku,
@@ -70,8 +72,9 @@ def update_product(
     product_id: int,
     request: ProductUpdateRequest,
     repository: ProductRepositoryDependency,
+    audit_log_repository: AuditLogRepositoryDependency,
 ) -> ProductViewModel:
-    product = UpdateProduct(repository).execute(
+    product = UpdateProduct(repository, audit_log_repository).execute(
         UpdateProductCommand(
             product_id=product_id,
             name=request.name,
@@ -91,8 +94,9 @@ def update_product(
 def delete_product(
     product_id: int,
     repository: ProductRepositoryDependency,
+    audit_log_repository: AuditLogRepositoryDependency,
 ) -> Response:
-    DeleteProduct(repository).execute(product_id)
+    DeleteProduct(repository, audit_log_repository).execute(product_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

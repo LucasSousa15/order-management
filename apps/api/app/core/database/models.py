@@ -133,7 +133,10 @@ class AuditLogModel(Base):
             "event_type IN ("
             "'PRODUCT_CREATED', "
             "'PRODUCT_UPDATED', "
+            "'PRODUCT_DELETED', "
             "'ORDER_CREATED', "
+            "'ORDER_UPDATED', "
+            "'ORDER_DELETED', "
             "'STOCK_MOVEMENT'"
             ")",
             name="ck_audit_logs_event_type",

@@ -2,6 +2,12 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from app.core.pagination import PageRequest, PageResult
+from app.modules.audit_logs.domain.entities import (
+    AuditEntityType,
+    AuditEventType,
+    AuditLog,
+)
+from app.modules.audit_logs.domain.repositories import AuditLogRepository
 from app.modules.products.application.errors import (
     ProductNotFoundError,
     ProductSkuAlreadyExistsError,
@@ -28,8 +34,13 @@ class UpdateProductCommand:
 
 
 class CreateProduct:
-    def __init__(self, repository: ProductRepository) -> None:
+    def __init__(
+        self,
+        repository: ProductRepository,
+        audit_log_repository: AuditLogRepository,
+    ) -> None:
         self._repository = repository
+        self._audit_log_repository = audit_log_repository
 
     def execute(self, command: CreateProductCommand) -> Product:
         product = Product(
@@ -42,7 +53,23 @@ class CreateProduct:
         if self._repository.get_by_sku(product.sku) is not None:
             raise ProductSkuAlreadyExistsError(product.sku)
 
-        return self._repository.add(product)
+        persisted_product = self._repository.add(product)
+        if persisted_product.id is None:
+            raise ValueError("A created product must have an ID.")
+        self._audit_log_repository.add(
+            AuditLog(
+                event_type=AuditEventType.PRODUCT_CREATED,
+                entity_type=AuditEntityType.PRODUCT,
+                entity_id=persisted_product.id,
+                details={
+                    "name": persisted_product.name,
+                    "sku": persisted_product.sku,
+                    "price": str(persisted_product.price),
+                    "stock_quantity": persisted_product.stock_quantity,
+                },
+            )
+        )
+        return persisted_product
 
 
 class ListProducts:
@@ -75,8 +102,13 @@ class GetProduct:
 
 
 class UpdateProduct:
-    def __init__(self, repository: ProductRepository) -> None:
+    def __init__(
+        self,
+        repository: ProductRepository,
+        audit_log_repository: AuditLogRepository,
+    ) -> None:
         self._repository = repository
+        self._audit_log_repository = audit_log_repository
 
     def execute(self, command: UpdateProductCommand) -> Product:
         current_product = self._repository.get_by_id(command.product_id)
@@ -99,12 +131,55 @@ class UpdateProduct:
         ):
             raise ProductSkuAlreadyExistsError(updated_product.sku)
 
-        return self._repository.update(updated_product)
+        persisted_product = self._repository.update(updated_product)
+        self._audit_log_repository.add(
+            AuditLog(
+                event_type=AuditEventType.PRODUCT_UPDATED,
+                entity_type=AuditEntityType.PRODUCT,
+                entity_id=command.product_id,
+                details={
+                    "before": self._product_snapshot(current_product),
+                    "after": self._product_snapshot(persisted_product),
+                },
+            )
+        )
+        if current_product.stock_quantity != persisted_product.stock_quantity:
+            self._audit_log_repository.add(
+                AuditLog(
+                    event_type=AuditEventType.STOCK_MOVEMENT,
+                    entity_type=AuditEntityType.PRODUCT,
+                    entity_id=command.product_id,
+                    details={
+                        "reason": AuditEventType.PRODUCT_UPDATED.value,
+                        "previous_quantity": current_product.stock_quantity,
+                        "change": (
+                            persisted_product.stock_quantity
+                            - current_product.stock_quantity
+                        ),
+                        "new_quantity": persisted_product.stock_quantity,
+                    },
+                )
+            )
+        return persisted_product
+
+    @staticmethod
+    def _product_snapshot(product: Product) -> dict[str, str | int]:
+        return {
+            "name": product.name,
+            "sku": product.sku,
+            "price": str(product.price),
+            "stock_quantity": product.stock_quantity,
+        }
 
 
 class DeleteProduct:
-    def __init__(self, repository: ProductRepository) -> None:
+    def __init__(
+        self,
+        repository: ProductRepository,
+        audit_log_repository: AuditLogRepository,
+    ) -> None:
         self._repository = repository
+        self._audit_log_repository = audit_log_repository
 
     def execute(self, product_id: int) -> None:
         product = self._repository.get_by_id(product_id)
@@ -112,6 +187,19 @@ class DeleteProduct:
             raise ProductNotFoundError(product_id)
 
         self._repository.delete(product)
+        self._audit_log_repository.add(
+            AuditLog(
+                event_type=AuditEventType.PRODUCT_DELETED,
+                entity_type=AuditEntityType.PRODUCT,
+                entity_id=product_id,
+                details={
+                    "name": product.name,
+                    "sku": product.sku,
+                    "price": str(product.price),
+                    "stock_quantity": product.stock_quantity,
+                },
+            )
+        )
 
 
 __all__ = [
