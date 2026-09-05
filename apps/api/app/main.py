@@ -11,7 +11,7 @@ from app.modules.products.infra.http.exception_handlers import (
 )
 from app.modules.products.infra.http.router import router as products_router
 
-app = FastAPI()
+app = FastAPI(title="API de Gestão de Estoque e Pedidos", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,

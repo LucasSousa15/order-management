@@ -26,7 +26,7 @@ from app.modules.products.infra.http.view_models import (
 )
 
 
-router = APIRouter(prefix="/products", tags=["products"])
+router = APIRouter(prefix="/products", tags=["Products"])
 
 
 @router.post("", response_model=ProductViewModel, status_code=status.HTTP_201_CREATED)

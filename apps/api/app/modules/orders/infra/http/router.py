@@ -28,7 +28,7 @@ from app.modules.orders.infra.http.view_models import (
 )
 
 
-router = APIRouter(prefix="/orders", tags=["orders"])
+router = APIRouter(prefix="/orders", tags=["Orders"])
 
 
 @router.post("", response_model=OrderViewModel, status_code=status.HTTP_201_CREATED)

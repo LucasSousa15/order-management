@@ -8,7 +8,7 @@ from app.modules.audit_logs.infra.http.dependencies import AuditLogRepositoryDep
 from app.modules.audit_logs.infra.http.view_models import AuditLogListViewModel
 
 
-router = APIRouter(prefix="/audit-logs", tags=["audit-logs"])
+router = APIRouter(prefix="/audit-logs", tags=["Audit Logs"])
 
 
 @router.get("", response_model=AuditLogListViewModel)
