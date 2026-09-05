@@ -1,6 +1,7 @@
+from collections.abc import Sequence
 from typing import Never
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -43,10 +44,40 @@ class SqlAlchemyProductRepository:
         product_model = self._session.scalar(statement)
         return self._to_entity(product_model) if product_model is not None else None
 
+    def get_by_ids_for_update(
+        self,
+        product_ids: Sequence[int],
+    ) -> tuple[Product, ...]:
+        if not product_ids:
+            return ()
+
+        statement = (
+            select(ProductModel)
+            .where(ProductModel.id.in_(product_ids))
+            .order_by(ProductModel.id)
+            .with_for_update()
+        )
+        product_models = self._session.scalars(statement).all()
+        return tuple(self._to_entity(product_model) for product_model in product_models)
+
     def list_all(self) -> tuple[Product, ...]:
         statement = select(ProductModel).order_by(ProductModel.id)
         product_models = self._session.scalars(statement).all()
         return tuple(self._to_entity(product_model) for product_model in product_models)
+
+    def list_paginated(self, offset: int, limit: int) -> tuple[Product, ...]:
+        statement = (
+            select(ProductModel)
+            .order_by(ProductModel.id)
+            .offset(offset)
+            .limit(limit)
+        )
+        product_models = self._session.scalars(statement).all()
+        return tuple(self._to_entity(product_model) for product_model in product_models)
+
+    def count(self) -> int:
+        statement = select(func.count()).select_from(ProductModel)
+        return self._session.scalar(statement) or 0
 
     def update(self, product: Product) -> Product:
         if product.id is None:

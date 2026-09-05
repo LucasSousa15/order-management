@@ -1,5 +1,8 @@
-from fastapi import APIRouter, Response, status
+from typing import Annotated
 
+from fastapi import APIRouter, Query, Response, status
+
+from app.core.pagination import PageRequest
 from app.modules.products.application.use_cases import (
     CreateProduct,
     CreateProductCommand,
@@ -9,26 +12,28 @@ from app.modules.products.application.use_cases import (
     UpdateProduct,
     UpdateProductCommand,
 )
-from app.modules.products.domain.entities import Product
 from app.modules.products.infra.http.dependencies import (
     ProductRepositoryDependency,
 )
 from app.modules.products.infra.http.schemas import (
     ProductCreateRequest,
-    ProductResponse,
     ProductUpdateRequest,
+)
+from app.modules.products.infra.http.view_models import (
+    ProductListViewModel,
+    ProductViewModel,
 )
 
 
 router = APIRouter(prefix="/products", tags=["products"])
 
 
-@router.post("", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ProductViewModel, status_code=status.HTTP_201_CREATED)
 def create_product(
     request: ProductCreateRequest,
     repository: ProductRepositoryDependency,
-) -> Product:
-    return CreateProduct(repository).execute(
+) -> ProductViewModel:
+    product = CreateProduct(repository).execute(
         CreateProductCommand(
             name=request.name,
             sku=request.sku,
@@ -36,28 +41,37 @@ def create_product(
             stock_quantity=request.stock_quantity,
         )
     )
+    return ProductViewModel.from_entity(product)
 
 
-@router.get("", response_model=list[ProductResponse])
-def list_products(repository: ProductRepositoryDependency) -> list[Product]:
-    return list(ListProducts(repository).execute())
+@router.get("", response_model=ProductListViewModel)
+def list_products(
+    repository: ProductRepositoryDependency,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> ProductListViewModel:
+    result = ListProducts(repository).execute(
+        PageRequest(page=page, page_size=page_size)
+    )
+    return ProductListViewModel.from_page(result)
 
 
-@router.get("/{product_id}", response_model=ProductResponse)
+@router.get("/{product_id}", response_model=ProductViewModel)
 def get_product(
     product_id: int,
     repository: ProductRepositoryDependency,
-) -> Product:
-    return GetProduct(repository).execute(product_id)
+) -> ProductViewModel:
+    product = GetProduct(repository).execute(product_id)
+    return ProductViewModel.from_entity(product)
 
 
-@router.put("/{product_id}", response_model=ProductResponse)
+@router.put("/{product_id}", response_model=ProductViewModel)
 def update_product(
     product_id: int,
     request: ProductUpdateRequest,
     repository: ProductRepositoryDependency,
-) -> Product:
-    return UpdateProduct(repository).execute(
+) -> ProductViewModel:
+    product = UpdateProduct(repository).execute(
         UpdateProductCommand(
             product_id=product_id,
             name=request.name,
@@ -66,6 +80,7 @@ def update_product(
             stock_quantity=request.stock_quantity,
         )
     )
+    return ProductViewModel.from_entity(product)
 
 
 @router.delete(

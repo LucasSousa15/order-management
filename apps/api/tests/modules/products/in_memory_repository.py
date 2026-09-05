@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import replace
 from datetime import UTC, datetime
 
@@ -33,8 +34,25 @@ class InMemoryProductRepository:
             None,
         )
 
+    def get_by_ids_for_update(
+        self,
+        product_ids: Sequence[int],
+    ) -> tuple[Product, ...]:
+        return tuple(
+            product
+            for product_id in product_ids
+            if (product := self._products.get(product_id)) is not None
+        )
+
     def list_all(self) -> tuple[Product, ...]:
         return tuple(self._products.values())
+
+    def list_paginated(self, offset: int, limit: int) -> tuple[Product, ...]:
+        products = tuple(self._products.values())
+        return products[offset : offset + limit]
+
+    def count(self) -> int:
+        return len(self._products)
 
     def update(self, product: Product) -> Product:
         if product.id is None or product.id not in self._products:

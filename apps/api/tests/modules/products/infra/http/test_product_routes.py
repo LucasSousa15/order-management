@@ -38,7 +38,17 @@ def test_product_crud(client: TestClient) -> None:
 
     list_response = client.get("/products")
     assert list_response.status_code == 200
-    assert list_response.json() == [created_product]
+    assert list_response.json() == {
+        "data": [created_product],
+        "meta": {
+            "page": 1,
+            "page_size": 20,
+            "total_items": 1,
+            "total_pages": 1,
+            "has_next_page": False,
+            "has_previous_page": False,
+        },
+    }
 
     get_response = client.get("/products/1")
     assert get_response.status_code == 200
@@ -98,5 +108,46 @@ def test_reject_invalid_product_payload(client: TestClient) -> None:
             "stock_quantity": -1,
         },
     )
+
+    assert response.status_code == 422
+
+
+def test_paginate_products(client: TestClient) -> None:
+    for index in range(1, 4):
+        response = client.post(
+            "/products",
+            json={
+                "name": f"Product {index}",
+                "sku": f"PRO-{index:03}",
+                "price": "10.00",
+                "stock_quantity": 1,
+            },
+        )
+        assert response.status_code == 201
+
+    response = client.get("/products?page=2&page_size=1")
+
+    assert response.status_code == 200
+    response_body = response.json()
+    assert [product["id"] for product in response_body["data"]] == [2]
+    assert response_body["meta"] == {
+        "page": 2,
+        "page_size": 1,
+        "total_items": 3,
+        "total_pages": 3,
+        "has_next_page": True,
+        "has_previous_page": True,
+    }
+
+
+@pytest.mark.parametrize(
+    "query_string",
+    ["page=0", "page_size=0", "page_size=101"],
+)
+def test_reject_invalid_pagination(
+    client: TestClient,
+    query_string: str,
+) -> None:
+    response = client.get(f"/products?{query_string}")
 
     assert response.status_code == 422

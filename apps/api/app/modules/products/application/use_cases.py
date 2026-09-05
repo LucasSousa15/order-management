@@ -1,7 +1,7 @@
-from collections.abc import Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 
+from app.core.pagination import PageRequest, PageResult
 from app.modules.products.application.errors import (
     ProductNotFoundError,
     ProductSkuAlreadyExistsError,
@@ -49,8 +49,17 @@ class ListProducts:
     def __init__(self, repository: ProductRepository) -> None:
         self._repository = repository
 
-    def execute(self) -> Sequence[Product]:
-        return self._repository.list_all()
+    def execute(self, page: PageRequest) -> PageResult[Product]:
+        products = self._repository.list_paginated(
+            offset=page.offset,
+            limit=page.page_size,
+        )
+        return PageResult(
+            items=tuple(products),
+            page=page.page,
+            page_size=page.page_size,
+            total_items=self._repository.count(),
+        )
 
 
 class GetProduct:

@@ -1,4 +1,3 @@
-from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
 
@@ -28,19 +27,7 @@ class ProductUpdateRequest(ProductWriteRequest):
     pass
 
 
-class ProductResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    name: str
-    sku: str
-    price: Decimal
-    stock_quantity: int
-    created_at: datetime
-
-
 __all__ = [
     "ProductCreateRequest",
-    "ProductResponse",
     "ProductUpdateRequest",
 ]

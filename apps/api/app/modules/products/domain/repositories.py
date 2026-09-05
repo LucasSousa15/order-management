@@ -16,7 +16,19 @@ class ProductRepository(Protocol):
     def get_by_sku(self, sku: str) -> Product | None:
         ...
 
+    def get_by_ids_for_update(
+        self,
+        product_ids: Sequence[int],
+    ) -> Sequence[Product]:
+        ...
+
     def list_all(self) -> Sequence[Product]:
+        ...
+
+    def list_paginated(self, offset: int, limit: int) -> Sequence[Product]:
+        ...
+
+    def count(self) -> int:
         ...
 
     def update(self, product: Product) -> Product:
