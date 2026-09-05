@@ -1,3 +1,4 @@
+import { ActivityIndicator } from './activity-indicator'
 import type { ComponentPropsWithoutRef } from 'react'
 
 export type ButtonProps = ComponentPropsWithoutRef<'button'> & {
@@ -28,9 +29,9 @@ export function Button({
       type={type}
       disabled={disabled || isLoading}
       aria-busy={isLoading || undefined}
-      className={`inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
     >
-      {isLoading ? loadingLabel : children}
+      {isLoading ? <ActivityIndicator label={loadingLabel} /> : children}
     </button>
   )
 }
