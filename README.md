@@ -43,7 +43,7 @@ Aplicação Full Stack para gerenciamento de produtos, pedidos, estoque e logs d
 
 - Node.js 24
 - Docker Compose
-- Visual Studio Code Dev Containers
+- Cursor ou Visual Studio Code, com Dev Containers
 
 As versões completas das dependências estão registradas em `apps/api/requirements.txt` e `apps/web/package-lock.json`.
 
@@ -54,8 +54,10 @@ As versões completas das dependências estão registradas em `apps/api/requirem
 O caminho recomendado utiliza:
 
 - Docker com Docker Compose;
-- Visual Studio Code;
+- Cursor ou Visual Studio Code;
 - extensão Dev Containers instalada.
+
+O Antigravity IDE **não é compatível** com Dev Containers. Para abrir e executar este projeto no ambiente containerizado, use Cursor ou Visual Studio Code.
 
 Não é necessário instalar Python, Node.js ou PostgreSQL diretamente na máquina ao utilizar o Dev Container.
 
@@ -87,7 +89,7 @@ Essa separação impede que a execução dos testes altere os dados usados duran
 
 ### Executando com Dev Container
 
-Abra a pasta no Visual Studio Code e execute o comando `Dev Containers: Reopen in Container`.
+Abra a pasta no Cursor ou no Visual Studio Code e execute o comando `Dev Containers: Reopen in Container`. Não utilize o Antigravity IDE para esse fluxo: ele não oferece suporte adequado a Dev Containers.
 
 Na primeira inicialização, o ambiente automaticamente:
 
