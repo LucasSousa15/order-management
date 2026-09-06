@@ -4,8 +4,8 @@ import { DataTable } from '../../components/data-table'
 import type { TableColumn } from '../../components/data-table'
 import { Modal } from '../../components/modal'
 import { PageHeader } from '../../components/page-header'
-import { useLogs } from '../../hooks/logs/use-logs'
-import type { AuditLog } from '../../hooks/logs/types'
+import { useLogs } from '../../hooks/audit-logs/use-logs'
+import type { AuditLog } from '../../hooks/audit-logs/types'
 
 const eventLabels: Record<AuditLog['event_type'], string> = {
   PRODUCT_CREATED: 'Produto criado',
